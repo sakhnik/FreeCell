@@ -1,11 +1,25 @@
-module FreeCell where
+module FreeCell (
+    -- Data types.
+    Stack, Cell, Foundation,
+    Desk (Desk),
+    -- Deal cards.
+    deal,
+    -- Various moves.
+    stackToFoundation,
+    stackToCell,
+    cellToStack,
+    cellToFoundation,
+    stackToStack
+    )
+    where
 
 import Cards
 import Data.List
 import Data.Maybe
 import Test.QuickCheck
+import System.IO.Unsafe
 
-data Stacks = Stacks [[Card]]
+dbg msg a = unsafePerformIO $ putStrLn (msg ++ show a) >> return a
 
 -- Distribute elements of a list to columns:
 -- [A, B, C, D, E, F, G, H, I, J, K, L, M] -> (4)
@@ -281,7 +295,7 @@ stackToStack desk col1 col2 =
         stack1 = stacks !! col1
         stack2 = stacks !! col2
         -- Count of free cells and piles.
-        freeCells = foldl (\i c -> if isJust c then i + 1 else i) 0 cells
+        freeCells = foldl (\i c -> if isNothing c then i + 1 else i) 0 cells
         freePiles = foldl (\i p -> if null p then i + 1 else i) 0 stacks
         -- Check if c1 can be lied on c2.
         liesOk (Card v1 s1, Card v2 s2) =  (v1 /= Ace)

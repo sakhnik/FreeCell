@@ -6,6 +6,7 @@ import Data.Char
 
 import qualified Cards
 import qualified FreeCell
+import qualified Automation
 import qualified UTF8
 
 toUtf8 :: String -> String
@@ -32,10 +33,10 @@ doMove from to desk =
         t = digitToInt to
         -- Check what a coordinate number mean.
         isStack idx = 0 < idx && idx < 9
-        isCell idx = 9 < idx && idx < 14
+        isCell idx = 9 <= idx && idx < 14
         isFnd idx = idx == 0
         -- Translate coordinate to the index.
-        cellId idx = idx - 10
+        cellId idx = if idx > 9 then idx - 10 else 0
         stackId idx = idx - 1
         -- Game rules.
         stack2found = FreeCell.stackToFoundation desk
@@ -53,8 +54,9 @@ doMove from to desk =
     in  result
 
 doGame :: FreeCell.Desk -> IO ()
-doGame desk = do
+doGame desk1 = do
     putStrLn ""
+    let desk = Automation.foundateAllUnneeded desk1
     putStrUtf8Ln $ show $ desk
     putStr $ "Your move: "
     hFlush stdout

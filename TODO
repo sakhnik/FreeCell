@@ -1,6 +1,4 @@
 * Implement custom foundation selection.
-* Refactor repeating checks on col.
-* Implement some intelligence (moving stacks etc).
 * Implement other views.
 * Configuration from command line.
 * Implement statistics counter.
