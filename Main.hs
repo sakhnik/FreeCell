@@ -7,7 +7,12 @@ import Data.Char
 import qualified Cards
 import qualified FreeCell
 import qualified Automation
+import qualified History
 import qualified UTF8
+
+-- Past, present, future.
+data Game = Game ([FreeCell.Desk], FreeCell.Desk, [FreeCell.Desk])
+
 
 toUtf8 :: String -> String
 toUtf8 s = map (chr . fromEnum) (UTF8.encode s)
@@ -22,6 +27,9 @@ printHelp = do
     putStrLn "q\t\t\tExit"
     putStrLn "h,?\t\t\tHelp message"
     putStrLn "n\t\t\tNew game"
+    putStrLn "u\t\t\tUndo"
+    putStrLn "y\t\t\tRedo"
+    putStrLn "r\t\t\tRestart from the beginning."
     putStrLn "<src><dst>\t\tMove a card from <src> to the <dst>"
     putStrLn ""
     putStrLn "Good luck, and keep patience!"
@@ -53,29 +61,55 @@ doMove from to desk =
                                              desk)
     in  result
 
-doGame :: FreeCell.Desk -> IO ()
-doGame desk1 = do
+doGame :: Game -> IO ()
+doGame game = do
     putStrLn ""
     let desk = Automation.foundateAllUnneeded desk1
+        desk1 = History.present g
+        Game g = game
     putStrUtf8Ln $ show $ desk
     putStr $ "Your move: "
     hFlush stdout
     move <- getLine
     case move of
         'q':_        -> return ()
-        'h':_        -> printHelp >> doGame desk
-        '?':_        -> printHelp >> doGame desk
+        'h':_        -> printHelp >> doGame game
+        '?':_        -> printHelp >> doGame game
         'n':_        -> newGame
+        'u':_        -> do
+            let hasPast = History.hasPrevious g
+                g' = History.previous g
+                game' = Game g'
+            if hasPast
+                then doGame game'
+                else do
+                    putStrLn "Sorry, this is the last situation, I remember."
+                    doGame game
+        'y':_        -> do
+            let hasFuture = History.hasNext g
+                g' = History.next g
+                game' = Game g'
+            if hasFuture
+                then doGame game'
+                else do
+                    putStrLn "Sorry, this is the newest situation, I know."
+                    doGame game
+        'r':_        -> do
+            let g' = History.oldest g
+                game' = Game g'
+            doGame game'
         from:to:rest -> do
             let
                 inputOk = isHexDigit from && isHexDigit to
                 (err, desk') | inputOk   = doMove from to desk
                              | otherwise = (Just "Must be hex digits.", desk)
             case err of
-                Just strErr -> putStrLn strErr
-                Nothing     -> return ()
-            doGame desk'
-        _            -> putStrLn "Hugh?" >> doGame desk
+                Just strErr -> putStrLn strErr >> doGame game
+                Nothing     -> do
+                    let g' = History.record g desk'
+                        game' = Game g'
+                    doGame game'
+        _            -> putStrLn "Hugh?" >> doGame game
 
 newGame :: IO ()
 newGame = do
@@ -83,7 +117,8 @@ newGame = do
     seed <- randomIO
     let shuffled = Cards.shuffle seed pack
         desk = FreeCell.deal shuffled
-    doGame desk
+        game = Game $ History.new desk
+    doGame game
 
 main :: IO ()
 main = newGame
