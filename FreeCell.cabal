@@ -1,12 +1,14 @@
 Name:                FreeCell
-Version:             0.0.1
+Version:             1.0
 Description:         FreeCell patience
 License:	         BSD3
 License-file:        LICENSE
 Author:              Anatoli Sakhnik
 Maintainer:          sakhnik@gmail.com
 Build-Depends:       base, haskell98, QuickCheck
+Extra-source-files:  TODO
 
 Executable:          FreeCell
 Main-is:             Main.hs
+Other-modules:       Automation, Cards, FreeCell, History, Main, UTF8
 ghc-options:         -O

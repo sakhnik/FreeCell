@@ -90,7 +90,7 @@ showDesk (Desk stacks cells foundations) =
         strStacks = concat $ map (strStack) (transpose' stacks)
 
     in  "┌───┬───┬───┬───┬───────┬───┬───┬───┬───┐\n"  ++
-        "│" ++ strRes ++ "   λ   │" ++ strDest ++ "\n" ++
+        "9" ++ strRes ++ "   λ   │" ++ strDest ++ "\n" ++
         "├─A─┴─B─┴─C─┴─D─┘       └─0─┴─0─┴─0─┴─0─┤\n"  ++
         "├────┬────┬────┬────┬────┬────┬────┬────┤\n"  ++
                          strStacks                     ++
@@ -184,8 +184,7 @@ stackToFoundation desk@(Desk stacks cells foundations) col =
                | otherwise            = (Nothing, desk')
     in  result
 
--- Move a card from stacks to a free cell. If the requested cell
--- isn't free, another one is chosen automatically.
+-- Move a card from stacks to a free cell.
 stackToCell :: Desk -> Int -> Int -> (Maybe String, Desk)
 stackToCell desk col idx =
     let
@@ -193,8 +192,6 @@ stackToCell desk col idx =
         Desk stacks cells foundations = desk
         -- Is the requested cell free?
         cellIsFree = Nothing == cells !! idx
-        -- Another free cell.
-        freeCell = elemIndex Nothing cells
         -- Selected stack.
         stack = stacks !! col
         -- The rest of stack.
@@ -202,22 +199,18 @@ stackToCell desk col idx =
         -- Accessible card in the stack.
         card = head stack
         -- Modified cells.
-        cells' i = take i cells ++ [Just card] ++ drop (i+1) cells
-        -- An index of first free cell.
-        idx' = fromJust freeCell
+        cells' i = take i cells ++ [Just card] ++ drop (i + 1) cells
         -- Stacks with modified stack.
         stacks' = take col stacks ++ [stack'] ++ drop (col + 1) stacks
         -- The card has just been moved to the requested cell.
-        desk1 = Desk stacks' (cells' idx) foundations
-        -- The card has just been moved to another free cell.
-        desk2 = Desk stacks' (cells' idx') foundations
+        desk' = Desk stacks' (cells' idx) foundations
         result | col < 0 || col >= length stacks
                                       = (Just "No such column.", desk)
                | null stack           = (Just "There's no card there.", desk)
-               | isNothing freeCell   = (Just "There's no free cell.", desk)
-               | idx < length cells && idx >= 0 && cellIsFree
-                                      = (Nothing, desk1)
-               | otherwise            = (Nothing, desk2)
+               | idx < 0 && idx >= length cells
+                                      = (Just "There's no such cell.", desk)
+               | not cellIsFree       = (Just "The cell isn't free.", desk)
+               | otherwise            = (Nothing, desk')
     in  result
 
 -- Move a card from the cell to stack.

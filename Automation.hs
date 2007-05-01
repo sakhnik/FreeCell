@@ -52,3 +52,35 @@ foundateUnneeded desk =
         result | null canFound  = (False, desk)
                | otherwise      = (True, desk')
     in  result
+
+-- Move the faced card from the given stack to a free cell.
+stackToAnyCell :: Desk -> Int -> (Maybe String, Desk)
+stackToAnyCell desk col =
+    let
+        Desk _ cells _ = desk
+        lastCell = length cells - 1
+        -- Find first free cell.
+        possible = find (isNothing.fst) $ map (stackToCell desk col) $
+            [0 .. lastCell]
+    in  if isNothing possible then (Just "It isn't possible.", desk)
+                              else fromJust possible
+
+anyCellToStack :: Desk -> Int -> (Maybe String, Desk)
+anyCellToStack desk col =
+    let
+        Desk _ cells _ = desk
+        lastCell = length cells - 1
+        possible = find (isNothing.fst) $ map (\i -> cellToStack desk i col) $
+            [0 .. lastCell]
+    in  if isNothing possible then (Just "It isn't possible.", desk)
+                              else fromJust possible
+
+anyCellToFoundation :: Desk -> (Maybe String, Desk)
+anyCellToFoundation desk =
+    let
+        Desk _ cells _ = desk
+        lastCell = length cells - 1
+        possible = find (isNothing.fst) $ map (cellToFoundation desk) $
+            [0 .. lastCell]
+    in  if isNothing possible then (Just "It isn't possible.", desk)
+                              else fromJust possible

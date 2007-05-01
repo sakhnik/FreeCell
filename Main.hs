@@ -11,7 +11,7 @@ import qualified History
 import qualified UTF8
 
 -- Past, present, future.
-data Game = Game ([FreeCell.Desk], FreeCell.Desk, [FreeCell.Desk])
+type Game = ([FreeCell.Desk], FreeCell.Desk, [FreeCell.Desk])
 
 
 toUtf8 :: String -> String
@@ -41,10 +41,11 @@ doMove from to desk =
         t = digitToInt to
         -- Check what a coordinate number mean.
         isStack idx = 0 < idx && idx < 9
-        isCell idx = 9 <= idx && idx < 14
+        isCell idx = 9 < idx && idx < 14
         isFnd idx = idx == 0
+        isAnyCell idx = idx == 9
         -- Translate coordinate to the index.
-        cellId idx = if idx > 9 then idx - 10 else 0
+        cellId idx = idx - 10
         stackId idx = idx - 1
         -- Game rules.
         stack2found = FreeCell.stackToFoundation desk
@@ -52,10 +53,16 @@ doMove from to desk =
         cell2stack = FreeCell.cellToStack desk
         cell2found = FreeCell.cellToFoundation desk
         stack2stack = FreeCell.stackToStack desk
+        stack2anyCell = Automation.stackToAnyCell desk
+        anyCell2stack = Automation.anyCellToStack desk
+        anyCell2found = Automation.anyCellToFoundation desk
         result | isStack f && isFnd t     = stack2found (stackId f)
                | isStack f && isCell t    = stack2cell (stackId f) (cellId t)
+               | isStack f && isAnyCell t = stack2anyCell (stackId f)
                | isCell f && isStack t    = cell2stack (cellId f) (stackId t)
+               | isAnyCell f && isStack t = anyCell2stack (stackId t)
                | isCell f && isFnd t      = cell2found (cellId f)
+               | isAnyCell f && isFnd t   = anyCell2found
                | isStack f && isStack t   = stack2stack (stackId f) (stackId t)
                | otherwise                = (Just "Don't know how to do it.",
                                              desk)
@@ -65,8 +72,7 @@ doGame :: Game -> IO ()
 doGame game = do
     putStrLn ""
     let desk = Automation.foundateAllUnneeded desk1
-        desk1 = History.present g
-        Game g = game
+        desk1 = History.present game
     putStrUtf8Ln $ show $ desk
     putStr $ "Your move: "
     hFlush stdout
@@ -77,26 +83,23 @@ doGame game = do
         '?':_        -> printHelp >> doGame game
         'n':_        -> newGame
         'u':_        -> do
-            let hasPast = History.hasPrevious g
-                g' = History.previous g
-                game' = Game g'
+            let hasPast = History.hasPrevious game
+                game' = History.previous game
             if hasPast
                 then doGame game'
                 else do
                     putStrLn "Sorry, this is the last situation, I remember."
                     doGame game
-        'y':_        -> do
-            let hasFuture = History.hasNext g
-                g' = History.next g
-                game' = Game g'
+        'y':_ -> do
+            let hasFuture = History.hasNext game
+                game' = History.next game
             if hasFuture
                 then doGame game'
                 else do
                     putStrLn "Sorry, this is the newest situation, I know."
                     doGame game
-        'r':_        -> do
-            let g' = History.oldest g
-                game' = Game g'
+        'r':_ -> do
+            let game' = History.oldest game
             doGame game'
         from:to:rest -> do
             let
@@ -106,10 +109,9 @@ doGame game = do
             case err of
                 Just strErr -> putStrLn strErr >> doGame game
                 Nothing     -> do
-                    let g' = History.record g desk'
-                        game' = Game g'
+                    let game' = History.record game desk'
                     doGame game'
-        _            -> putStrLn "Hugh?" >> doGame game
+        _ -> putStrLn "Hugh?" >> doGame game
 
 newGame :: IO ()
 newGame = do
@@ -117,7 +119,7 @@ newGame = do
     seed <- randomIO
     let shuffled = Cards.shuffle seed pack
         desk = FreeCell.deal shuffled
-        game = Game $ History.new desk
+        game = History.new desk
     doGame game
 
 main :: IO ()
