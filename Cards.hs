@@ -1,10 +1,9 @@
 module Cards(
     -- Data types
-    Suit (Spades, Clubs, Diamonds, Hearts),
-    Value (Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten,
-        Jack, Queen, King, Ace),
-    Card (Card),
-    SuitColor (Black, Red),
+    Suit (..),
+    Face (..),
+    Card (..),
+    SuitColor (..),
     -- functions
     suitColor,
     sameColor,
@@ -31,10 +30,10 @@ instance Arbitrary Suit where
     arbitrary = oneof $ map (return) [Spades, Clubs, Diamonds, Hearts]
 
 showSuit :: Suit -> String
-showSuit Spades   = "\x1b[34m♠\x1b[0m"
-showSuit Clubs    = "\x1b[34m♣\x1b[0m"
-showSuit Diamonds = "\x1b[31m♦\x1b[0m"
-showSuit Hearts   = "\x1b[31m♥\x1b[0m"
+showSuit Spades   = "s"
+showSuit Clubs    = "c"
+showSuit Diamonds = "D"
+showSuit Hearts   = "H"
 
 data SuitColor = Black
                | Red
@@ -48,7 +47,7 @@ suitColor _      = Red
 sameColor :: Suit -> Suit -> Bool
 sameColor a b = (suitColor a) == (suitColor b)
 
-data Value = Two
+data Face  = Two
            | Three
            | Four
            | Five
@@ -63,42 +62,37 @@ data Value = Two
            | Ace
            deriving (Eq, Enum)
 
-instance Show Value where
-    show = showValue
+instance Show Face where
+    show = showFace
 
-instance Arbitrary Value where
+instance Arbitrary Face where
     coarbitrary = undefined
     arbitrary = oneof $ map (return) [Two, Three, Four, Five, Six, Seven,
         Eight, Nine, Ten, Jack, Queen, King, Ace]
 
-showValue :: Value -> String
-showValue Two   = " 2"
-showValue Three = " 3"
-showValue Four  = " 4"
-showValue Five  = " 5"
-showValue Six   = " 6"
-showValue Seven = " 7"
-showValue Eight = " 8"
-showValue Nine  = " 9"
-showValue Ten   = "10"
-showValue Jack  = " J"
-showValue Queen = " Q"
-showValue King  = " K"
-showValue Ace   = " A"
+showFace :: Face -> String
+showFace Two   = " 2"
+showFace Three = " 3"
+showFace Four  = " 4"
+showFace Five  = " 5"
+showFace Six   = " 6"
+showFace Seven = " 7"
+showFace Eight = " 8"
+showFace Nine  = " 9"
+showFace Ten   = "10"
+showFace Jack  = " J"
+showFace Queen = " Q"
+showFace King  = " K"
+showFace Ace   = " A"
 
-data Card = Card Value Suit
+data Card = Card Face Suit
           deriving Eq
 
 instance Show Card where
     show = showCard
 
 showCard :: Card -> String
-showCard (Card value suit) =
-    let color = case suitColor suit of
-                    Red   -> "\x1b[31m"
-                    Black -> "\x1b[34m"
-        noColor = "\x1b[0m"
-    in color ++ show value ++ noColor ++ show suit
+showCard (Card face suit) = show face ++ show suit
 
 -- Carthesian product of two lists
 cartProduct :: [a] -> [b] -> [(a, b)]
@@ -118,25 +112,25 @@ prop_cartProduct len1 len2 =
         sameLength && onlyOnce && known
 
 -- Make a pack of cards.
-mkPack :: [Value] -> [Suit] -> [Card]
-mkPack values suits =
-    let vs = cartProduct values suits
+mkPack :: [Face] -> [Suit] -> [Card]
+mkPack faces suits =
+    let vs = cartProduct faces suits
     in  map (\(v, s) -> Card v s) vs
 
 -- The standard pack of 36 cards.
 pack36 :: [Card]
 pack36 =
-    let values = [Six, Seven, Eight, Nine, Ten, Jack, Queen, King, Ace]
-        suits  = [Spades, Clubs, Diamonds, Hearts]
-    in mkPack values suits
+    let faces = [Six, Seven, Eight, Nine, Ten, Jack, Queen, King, Ace]
+        suits = [Spades, Clubs, Diamonds, Hearts]
+    in mkPack faces suits
 
 -- The standard pack of 52 cards.
 pack52 :: [Card]
 pack52 =
-    let values = [Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten,
-                  Jack, Queen, King, Ace]
-        suits  = [Spades, Clubs, Diamonds, Hearts]
-    in mkPack values suits
+    let faces = [Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten,
+                 Jack, Queen, King, Ace]
+        suits = [Spades, Clubs, Diamonds, Hearts]
+    in mkPack faces suits
 
 -- Shuffle given pack of cards, using random seed.
 shuffle :: Int -> [a] -> [a]

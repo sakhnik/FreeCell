@@ -10,5 +10,5 @@ Extra-source-files:  TODO
 
 Executable:          FreeCell
 Main-is:             Main.hs
-Other-modules:       Automation, Cards, FreeCell, History, Main, UTF8
+Other-modules:       Automation, Cards, FreeCell, History, Main, TextUI, UTF8
 ghc-options:         -O

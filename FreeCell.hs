@@ -1,7 +1,7 @@
 module FreeCell (
     -- Data types.
     Stack, Cell, Foundation,
-    Desk (Desk),
+    Desk (..),
     -- Deal cards.
     deal,
     -- Various moves.
@@ -9,7 +9,9 @@ module FreeCell (
     stackToCell,
     cellToStack,
     cellToFoundation,
-    stackToStack
+    stackToStack,
+    -- Utilities.
+    showDesk
     )
     where
 
@@ -59,42 +61,28 @@ type Foundation = Maybe Card
 data Desk = Desk [Stack] [Cell] [Foundation]
 
 instance Show Desk where
-    show = showDesk
+    show = \desk -> showDesk desk show
 
-{-
-Desk prototype:
-┌───┬───┬───┬───┬───────┬───┬───┬───┬───┐
-│10♠│ . │ . │ . │   λ   │ . │ . │ . │ . │
-├───┴───┴───┴───┘       └───┴───┴───┴───┤
-├────┬────┬────┬────┬────┬────┬────┬────┤
-│ A♣ │ 8♦ │ .  │ J♥ │ K♣ │ .  │ .  │ .  │
-│ 2♦ │ .  │ .  │ .  │ .  │ .  │ .  │ .  │
-└────┴────┴────┴────┴────┴────┴────┴────┘
--}
-showDesk :: Desk -> String
-showDesk (Desk stacks cells foundations) =
+showDesk :: Desk -> (Card -> String) -> String
+showDesk (Desk stacks cells foundations) cardStr =
     let -- Empty cell or foundation.
-        holder Nothing = " . │"
+        holder Nothing = " . "
         -- A card on a cell or a foundation.
-        holder (Just card) = show card ++ "│"
+        holder (Just card) = cardStr card
         -- Show cells and foundations.
         strHold = concat . map (holder)
         strRes = strHold cells
         strDest = strHold foundations
 
         -- Emty place in a stack.
-        holder' Nothing = " .  │"
+        holder' Nothing = " .  "
         -- A card on in a stack.
-        holder' (Just card) = show card ++ " │"
-        strStack = (++ "\n") . ("│" ++) . concat . map (holder')
+        holder' (Just card) = cardStr card ++ " "
+        strStack = (++ "\n") . concat . map (holder')
         strStacks = concat $ map (strStack) (transpose' stacks)
 
-    in  "┌───┬───┬───┬───┬───────┬───┬───┬───┬───┐\n"  ++
-        "9" ++ strRes ++ "   λ   │" ++ strDest ++ "\n" ++
-        "├─A─┴─B─┴─C─┴─D─┘       └─0─┴─0─┴─0─┴─0─┤\n"  ++
-        "├────┬────┬────┬────┬────┬────┬────┬────┤\n"  ++
-                         strStacks                     ++
-        "└─1──┴─2──┴─3──┴─4──┴─5──┴─6──┴─7──┴─8──┘\n"
+    in  strRes ++ "   A    " ++ strDest ++ "\n" ++
+        strStacks
 
 -- Special transposition, used to display stacks sibling-by-sibling.
 transpose' :: [[a]] -> [[Maybe a]]
@@ -147,10 +135,10 @@ tryFoundate foundations (Card Two suit) =
     let sameAce Nothing           = False
         sameAce (Just (Card v s)) = s == suit && v == Ace
     in  findIndex sameAce foundations
-tryFoundate foundations (Card value suit) =
+tryFoundate foundations (Card face suit) =
     -- Other cards must be placed subordinally.
     let samePred Nothing           = False
-        samePred (Just (Card v s)) = s == suit && v == pred value
+        samePred (Just (Card v s)) = s == suit && v == pred face
     in  findIndex samePred foundations
 
 

@@ -1,8 +1,6 @@
 * Implement custom foundation selection.
 * Implement other views.
-* Configuration from command line.
 * Implement statistics counter.
 * Solver!!!
-* Support other systems as well.
 * Test everything, coverage -> 100%.
 * Hints.
