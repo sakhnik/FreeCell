@@ -26,7 +26,6 @@ instance Show Suit where
     show = showSuit
 
 instance Arbitrary Suit where
-    coarbitrary = undefined
     arbitrary = oneof $ map (return) [Spades, Clubs, Diamonds, Hearts]
 
 showSuit :: Suit -> String
@@ -66,7 +65,6 @@ instance Show Face where
     show = showFace
 
 instance Arbitrary Face where
-    coarbitrary = undefined
     arbitrary = oneof $ map (return) [Two, Three, Four, Five, Six, Seven,
         Eight, Nine, Ten, Jack, Queen, King, Ace]
 
